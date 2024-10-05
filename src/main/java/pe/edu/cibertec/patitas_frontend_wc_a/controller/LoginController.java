@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import pe.edu.cibertec.patitas_frontend_wc_a.dto.LoginRequestDTO;
 import pe.edu.cibertec.patitas_frontend_wc_a.dto.LoginResponseDTO;
 import pe.edu.cibertec.patitas_frontend_wc_a.viewmodel.LoginModel;
+import reactor.core.publisher.Mono;
 
 @Controller
 @RequestMapping("/login")
@@ -45,9 +46,16 @@ public class LoginController {
 
         try {
 
-            // Invocar servicio de autenticación
+            // invocar servicio de autenticación
             LoginRequestDTO loginRequestDTO = new LoginRequestDTO(tipoDocumento, numeroDocumento, password);
-            LoginResponseDTO loginResponseDTO = webClientAutenticacion.postForObject("/login", loginRequestDTO, LoginResponseDTO.class);
+            Mono<LoginResponseDTO> monoLoginResponseDTO = webClientAutenticacion.post()
+                    .uri("/login")
+                    .body(Mono.just(loginRequestDTO), LoginRequestDTO.class)
+                    .retrieve()
+                    .bodyToMono(LoginResponseDTO.class);
+
+            // recuperar resultado modo bloqueante (Sincrónico)
+            LoginResponseDTO loginResponseDTO = monoLoginResponseDTO.block();
 
             if (loginResponseDTO.codigo().equals("00")){
 
